@@ -4,8 +4,19 @@
 #include <ctype.h>
 
 /*
-
-
+A empresa de tecnologia Poxim Tech está
+desenvolvendo uma rede social para os melhores
+amigos, com a ideia de unir as pessoas como se
+estivessem de mãos dadas através de um círculo de
+pessoas que interagem com os vizinhos
+▶ Os nomes dos usuários desta rede são compostos
+exclusivamente por letras com até 50 caracteres
+▶ Quando um usuário é adicionado ele sempre será
+amigo do último e do primeiro usuário da rede social
+▶ Caso seja removido da rede social, os amigos do
+usuário passam a ser amigos entre si
+▶ É possível buscar uma determinada pessoa através
+do seu nome e mostrar os nomes de seus amigos
 */
 
 
