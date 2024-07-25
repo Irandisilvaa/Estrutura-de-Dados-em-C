@@ -146,9 +146,12 @@ void lerComandos (FILE *input, FILE *output, Lista *lista) {
         linha[strcspn(linha, "\n")] = '\0'; 
         if (sscanf(linha, "%s %50[^\n]", comando, nome) == 2) {
             
-            for (char *p = comando; *p; ++p) {
-                *p = toupper(*p);
+            char *p = comando;
+            while (*p) {
+                *p = toupper((unsigned char)*p);
+                p++;
             }
+
 
             int adicionar = strcmp(comando, "ADD") == 0;
             int remover = strcmp(comando, "REMOVE") == 0;
