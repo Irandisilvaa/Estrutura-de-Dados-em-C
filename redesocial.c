@@ -4,11 +4,12 @@
 #include <ctype.h>
 
 /*
+
 A empresa de tecnologia Poxim Tech está
 desenvolvendo uma rede social para os melhores
 amigos, com a ideia de unir as pessoas como se
 estivessem de mãos dadas através de um círculo de
-pessoas que interagem com os vizinhos
+pessoas que interagem com os vizinhos.
 ▶ Os nomes dos usuários desta rede são compostos
 exclusivamente por letras com até 50 caracteres
 ▶ Quando um usuário é adicionado ele sempre será
@@ -17,6 +18,7 @@ amigo do último e do primeiro usuário da rede social
 usuário passam a ser amigos entre si
 ▶ É possível buscar uma determinada pessoa através
 do seu nome e mostrar os nomes de seus amigos
+
 */
 
 
@@ -29,7 +31,6 @@ typedef struct no {
 } No;
 
 typedef struct {
-    int contador;
     No *inicio;
     No *final;
 } Lista;
@@ -66,51 +67,6 @@ void inserirNo (Lista *lista, const char *nome) {
         lista->inicio->anterior = novo;
         lista->final = novo;
     }
-    lista->contador++;
-}
-
-No* removerNo (Lista *lista, const char *elemento) {
-    if (lista->inicio == NULL) {
-        return NULL;}
-
-    No *remover = NULL;
-
-    // lista com um único nó
-    if (lista->inicio == lista->final) {
-        if (strcmp(lista->inicio->nome, elemento) == 0) {
-            remover = lista->inicio;
-            lista->inicio = NULL;
-            lista->final = NULL;
-            lista->contador--;
-        }
-        return remover;
-    }
-
-    if (strcmp(lista->inicio->nome, elemento) == 0) {
-        remover = lista->inicio;
-        lista->inicio = remover->proximo;
-        lista->final->proximo = lista->inicio;
-        lista->inicio->anterior = lista->final;
-        lista->contador--;
-        return remover;
-    }
-
-    No *atual = lista->inicio;
-    do {
-        if (strcmp(atual->proximo->nome, elemento) == 0) {
-            remover = atual->proximo;
-            if (remover == lista->final) {
-                lista->final = atual;
-            }
-            atual->proximo = remover->proximo;
-            remover->proximo->anterior = atual;
-            lista->contador--;
-            break;
-        }
-        atual = atual->proximo;
-    } while (atual != lista->inicio);
-
-    return remover;
 }
 
 
@@ -130,6 +86,47 @@ No* buscarNo (Lista *lista, const char *nome) {
 }
 
 
+No* removerNo (Lista *lista, const char *elemento) {
+    if (lista->inicio == NULL) {
+        return NULL;}
+
+    No *remover = NULL;
+
+    // lista com um único nó
+    if (lista->inicio == lista->final) {
+        if (strcmp(lista->inicio->nome, elemento) == 0) {
+            remover = lista->inicio;
+            lista->inicio = NULL;
+            lista->final = NULL;
+        }
+        return remover;
+    }
+
+    if (strcmp(lista->inicio->nome, elemento) == 0) {
+        remover = lista->inicio;
+        lista->inicio = remover->proximo;
+        lista->final->proximo = lista->inicio;
+        lista->inicio->anterior = lista->final;
+        return remover;
+    }
+
+    No *atual = lista->inicio;
+    do {
+        if (strcmp(atual->proximo->nome, elemento) == 0) {
+            remover = atual->proximo;
+            if (remover == lista->final) {
+                lista->final = atual;
+            }
+            atual->proximo = remover->proximo;
+            remover->proximo->anterior = atual;
+            break;
+        }
+        atual = atual->proximo;
+    } while (atual != lista->inicio);
+
+    return remover;
+}
+
 void mostrarNo (Lista *lista, const char *nome, FILE *saida) {
     No *no = buscarNo(lista, nome);
     if (no) {
@@ -139,6 +136,56 @@ void mostrarNo (Lista *lista, const char *nome, FILE *saida) {
     }
 }
 
+void lerComandos (FILE *input, FILE *output, Lista *lista) {
+
+    char linha[100];
+    char comando[10];
+    char nome[51];
+
+    while (fgets(linha, sizeof(linha), input)) {
+        linha[strcspn(linha, "\n")] = '\0'; 
+        if (sscanf(linha, "%s %50[^\n]", comando, nome) == 2) {
+            
+            for (char *p = comando; *p; ++p) {
+                *p = toupper(*p);
+            }
+
+            int adicionar = strcmp(comando, "ADD") == 0;
+            int remover = strcmp(comando, "REMOVE") == 0;
+            int show = strcmp(comando, "SHOW") == 0;
+
+            if (adicionar) {
+
+                No *noExistente = buscarNo(lista, nome);
+                if (noExistente) {
+                    fprintf(output, "[ERROR] ADD %s\n", nome);
+                } else {
+                    inserirNo(lista, nome);
+                    fprintf(output, "[ OK  ] ADD %s\n", nome);
+                }
+
+            } else if (remover) {
+
+                No *noRemovido = removerNo(lista, nome);
+
+                if (noRemovido ) {
+                    fprintf(output, "[ OK  ] REMOVE %s\n", nome);
+                    free(noRemovido );
+                } else {
+                    fprintf(output, "[ERROR] REMOVE %s\n", nome);
+                }
+
+            } else if (show) {
+                mostrarNo (lista, nome, output);
+            } else {
+                fprintf(output, "[ERROR] Comando inválido: %s\n", linha);
+            }
+        } else {
+            fprintf(output, "[ERROR] Formato de linha inválido: %s\n", linha);
+        }
+    }
+     
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -159,54 +206,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    Lista lista = {0, NULL, NULL};
+    Lista lista = {NULL, NULL};
 
-    char linha[100];
-    char comando[10];
-    char nome[51];
-
-    while (fgets(linha, sizeof(linha), input)) {
-        linha[strcspn(linha, "\n")] = '\0'; 
-        if (sscanf(linha, "%s %50[^\n]", comando, nome) == 2) {
-            
-            for (char *p = comando; *p; ++p) {
-                *p = toupper(*p);
-            }
-
-            int adicionar = strcmp(comando, "ADD") == 0;
-            int remover = strcmp(comando, "REMOVE") == 0;
-            int show = strcmp(comando, "SHOW") == 0;
-
-            if (adicionar) {
-
-                No *noExistente = buscarNo(&lista, nome);
-                if (noExistente) {
-                    fprintf(output, "[ERROR] ADD %s\n", nome);
-                } else {
-                    inserirNo(&lista, nome);
-                    fprintf(output, "[ OK  ] ADD %s\n", nome);
-                }
-
-            } else if (remover) {
-
-                No *noRemovido = removerNo(&lista, nome);
-
-                if (noRemovido ) {
-                    fprintf(output, "[ OK  ] REMOVE %s\n", nome);
-                    free(noRemovido );
-                } else {
-                    fprintf(output, "[ERROR] REMOVE %s\n", nome);
-                }
-
-            } else if (show) {
-                mostrarNo (&lista, nome, output);
-            } else {
-                fprintf(output, "[ERROR] Comando inválido: %s\n", linha);
-            }
-        } else {
-            fprintf(output, "[ERROR] Formato de linha inválido: %s\n", linha);
-        }
-    }
+    lerComandos(input,output, &lista);
 
     fclose(input);
     fclose(output);
