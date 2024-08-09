@@ -2,7 +2,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+/* A empresa de tecnologia Poxim Tech está realizando
+um estudo comparativo entre a busca binária e
+interpolada para um sistema de biblioteca, para
+determinar qual das abordagens é mais eficiente
+▶ Os livros são identificados unicamente pelo
+International Standard Book Number (ISBN) que é
+composto de 13 dígitos numéricos
+▶ Para realização de consulta dos livros é utilizado o
+ISBN, contabilizando o número total de chamadas
+realizadas para realização da busca binária e
+interpolada e retornando o nome do autor (até 50
+caracteres) e do título do livro (até 100 caracteres)
+▶ A busca interpolada é feita da função de heurística
+h(i, j) = 
+i +
+ Formato do arquivo de entrada
+▶ [#Livros]
+▶ [#ISBN1] [Autor1] & [Titulo1]
+▶ · · ·
+▶ [#ISBNn] [Autorn] & [Titulon]
+▶ [#Consultas]
+▶ [#ISBN1]
+▶ · · ·
+▶ [#ISBNm]*/
 typedef struct {
     long long ISBN;
     char nomeAutor[51];
