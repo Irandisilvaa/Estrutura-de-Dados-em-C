@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+
 /* A empresa de tecnologia Poxim Tech está realizando
 um estudo comparativo entre a busca binária e
 interpolada para um sistema de biblioteca, para
@@ -26,149 +23,141 @@ i +
 ▶ [#ISBN1]
 ▶ · · ·
 ▶ [#ISBNm]*/
-typedef struct {
-    long long ISBN;
-    char nomeAutor[51];
-    char tituloDoLivro[100];
-} Livro;
 
-int BuscaBinaria(Livro* book, int n, long long ISBN, int* contadorDeComparacoes) {
-    int inicio = 0;
-    int fim = n - 1;
-    *contadorDeComparacoes = 0;
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
+#define MAX_ISBN 14
+#define MAX_NOME_AUTOR 51
+#define MAX_NOME_LIVRO 101
+
+typedef struct livros {
+    char ISBN[MAX_ISBN];
+    char nomeAutor[MAX_NOME_AUTOR];
+    char nomeLivro[MAX_NOME_LIVRO];
+} Livros;
+
+int buscaBinaria(int* contagem, char pesquisa[MAX_ISBN], Livros* livros, int inicio, int fim) {
+    (*contagem)++;
+    if (fim < inicio) {
+        return -1;  // Não encontrado
+    }
+    
+    int meio = (inicio + fim) / 2;
+    int comparacao = strcmp(livros[meio].ISBN, pesquisa);
+
+    if (comparacao == 0) {
+        return meio;  // Item encontrado
+    } else if (comparacao > 0) {
+        return buscaBinaria(contagem, pesquisa, livros, inicio, meio - 1);
+    } else {
+        return buscaBinaria(contagem, pesquisa, livros, meio + 1, fim);
+    }
+}
+
+
+int  buscaInterpolada(int* count, char pesquisa[14], Livros* livros, int inicio, int fim) {
     while (inicio <= fim) {
-        (*contadorDeComparacoes)++;
-        int meio = inicio + (fim - inicio) / 2;
-        if (book[meio].ISBN == ISBN) 
-            return meio;
-        else if (book[meio].ISBN < ISBN) 
-            inicio = meio + 1;
-        else 
-            fim = meio - 1;
+        (*count)++;
+
+        long long isbn_i = strtoll(livros[inicio].ISBN, NULL, 10);
+        long long isbn_j = strtoll(livros[fim].ISBN, NULL, 10);
+
+        // Evitar divisão por zero
+        if (isbn_j == isbn_i) {
+            return strcmp(livros[inicio].ISBN, pesquisa) == 0 ? inicio : -1;
+        }
+
+        int p = inicio + ((isbn_j - isbn_i) % (fim - inicio + 1));
+
+        // Verificar se o índice calculado está dentro do intervalo
+        if (p < inicio || p > fim) return -1;
+
+        int cmp = strcmp(livros[p].ISBN, pesquisa);
+        if (cmp == 0) return p;
+        if (cmp < 0) inicio = p + 1;
+        else fim = p - 1;
     }
     return -1;
 }
+void processarConsultas(int quantidadeConsultas, char pesquisa[][MAX_ISBN], Livros* livros, int quantidadeLivros, FILE* saida) {
+    int contagemBinaria, contagemInterpolada;
+    int vitoriasBinaria = 0, vitoriasInterpolada = 0;
+    int totalBinaria = 0, totalInterpolada = 0;
 
-void LerDadosDosLivros(FILE* input, Livro* livros, int numeroDeLivros) {
-    for (int i = 0; i < numeroDeLivros; i++) {
-        fscanf(input, "%lld %50[^&] & %100[^\n]", &livros[i].ISBN, livros[i].nomeAutor, livros[i].tituloDoLivro);
-    }
-}
+    for (int i = 0; i < quantidadeConsultas; i++) {
+        contagemBinaria = 0;
+        contagemInterpolada = 0;
 
-void LerConsultas(FILE* input, long long** consultas, int* numeroDeConsultas) {
-    fscanf(input, "%d", numeroDeConsultas);
-    *consultas = malloc((*numeroDeConsultas) * sizeof(long long));
-    for (int i = 0; i < *numeroDeConsultas; i++) {
-        if (fscanf(input, "%lld", &(*consultas)[i]) != 1) {
-            printf("Erro ao ler o ISBN da consulta %d.\n", i + 1);
-            exit(1);
-        }
-    }
-}
+        int resultadoBinario = buscaBinaria(&contagemBinaria, pesquisa[i], livros, 0, quantidadeLivros - 1);
+        int resultadoInterpolado = buscaInterpolada(&contagemInterpolada, pesquisa[i], livros, 0, quantidadeLivros - 1);
 
-int Busca_Interpolada(Livro* book, int n, long long ISBN, int* contador) {
-    int inicio = 0;
-    int fim = n - 1;
-    *contador = 0;
 
-    while (inicio <= fim && ISBN >= book[inicio].ISBN && ISBN <= book[fim].ISBN) {
-        (*contador)++;
-        if (inicio == fim) {
-            if (book[inicio].ISBN == ISBN) 
-                return inicio;
-            return -1;
+        fprintf(saida, "[%s]B=%d,I=%d", pesquisa[i], contagemBinaria, contagemInterpolada);
+
+        totalBinaria += contagemBinaria;
+        totalInterpolada += contagemInterpolada;
+
+
+        if (contagemInterpolada <= contagemBinaria) {
+            vitoriasInterpolada++;
+        } else {
+            vitoriasBinaria++;
         }
 
-        int meio = inicio + (int)((double)(fim - inicio) * (ISBN - book[inicio].ISBN) / (book[fim].ISBN - book[inicio].ISBN));
 
-        if (book[meio].ISBN == ISBN) 
-            return meio;
-        else if (book[meio].ISBN < ISBN) 
-            inicio = meio + 1;
-        else 
-            fim = meio - 1;
+        if (resultadoBinario != -1) {
+            fprintf(saida, ":Author:%s,Title:%s\n", livros[resultadoBinario].nomeAutor, livros[resultadoBinario].nomeLivro);
+        } else if (resultadoInterpolado != -1) {
+            fprintf(saida, ":Author:%s,Title:%s\n", livros[resultadoInterpolado].nomeAutor, livros[resultadoInterpolado].nomeLivro);
+        } else {
+            fprintf(saida, ":ISBN_NOT_FOUND\n");
+        }
     }
-    return -1;
+
+    // Calcula e imprime as médias de desempenho
+    fprintf(saida, "BINARY=%d:%d\n", vitoriasBinaria, totalBinaria / quantidadeConsultas);
+    fprintf(saida, "INTERPOLATION=%d:%d\n", vitoriasInterpolada, totalInterpolada / quantidadeConsultas);
 }
 
 int main(int argc, char* argv[]) {
-    FILE* input = fopen(argv[1], "r");
-    FILE* output = fopen(argv[2], "w");
+    FILE* entrada = fopen(argv[1], "r");
+    FILE* saida = fopen(argv[2], "w");
 
-    if (input == NULL) {
-        printf("Erro ao abrir o arquivo de entrada.\n");
+    if (!entrada || !saida) {
+        fprintf(stderr, "Erro ao abrir os arquivos.\n");
         return 1;
     }
 
-    if (output == NULL) {
-        printf("Erro ao abrir o arquivo de saída.\n");
-        fclose(input);
+    int quantidadeLivros;
+    fscanf(entrada, "%d", &quantidadeLivros);
+
+    Livros* livros = (Livros*)malloc(quantidadeLivros * sizeof(Livros));
+    if (!livros) {
+        fprintf(stderr, "Erro de alocação de memória.\n");
+        fclose(entrada);
+        fclose(saida);
         return 1;
     }
 
-    int binarioVitoria = 0;
-    int interpoladaVitoria = 0;
-    int numDeChamadasBinaria = 0;
-    int numDeChamadasInterpolada = 0;
-
-    int numeroDeLivros;
-    if (fscanf(input, "%d", &numeroDeLivros) != 1) {
-        printf("Erro ao ler o número de livros.\n");
-        fclose(input);
-        fclose(output);
-        return 1;
+    for (int i = 0; i < quantidadeLivros; i++) {
+        fscanf(entrada, "%s %50[^&]&%100[^\n]", livros[i].ISBN, livros[i].nomeAutor, livros[i].nomeLivro);
     }
 
-    Livro* livros = malloc(numeroDeLivros * sizeof(Livro));
-    if (livros == NULL) {
-        printf("Erro ao alocar memória para livros.\n");
-        fclose(input);
-        fclose(output);
-        return 1;
+    int quantidadeConsultas;
+    fscanf(entrada, "%d", &quantidadeConsultas);
+
+    char pesquisa[quantidadeConsultas][MAX_ISBN];
+    for (int i = 0; i < quantidadeConsultas; i++) {
+        fscanf(entrada, "%s", pesquisa[i]);
     }
 
-    LerDadosDosLivros(input, livros, numeroDeLivros);
+    processarConsultas(quantidadeConsultas, pesquisa, livros, quantidadeLivros, saida);
 
-    int numeroDeConsultas;
-    long long* consultas;
-    LerConsultas(input, &consultas, &numeroDeConsultas);
-
-    fclose(input);
-
-    for (int i = 0; i < numeroDeConsultas; i++) {
-        int contBinario, contInterpolar;
-        int resulBinario = BuscaBinaria(livros, numeroDeLivros, consultas[i], &contBinario);
-        int resulInterpolada = Busca_Interpolada(livros, numeroDeLivros, consultas[i], &contInterpolar);
-
-        numDeChamadasBinaria += contBinario;
-        numDeChamadasInterpolada += contInterpolar;
-
-        if (resulBinario != -1) {
-            fprintf(output, "[%lld]B=%d,I=%d:Author:%s,Title:%s\n", 
-                    consultas[i], contBinario, contInterpolar, 
-                    livros[resulBinario].nomeAutor, livros[resulBinario].tituloDoLivro);
-        } else {
-            fprintf(output, "[%lld]B=%d,I=%d:ISBN_NOT_FOUND\n", 
-                    consultas[i], contBinario, contInterpolar);
-        }
-
-        if (contBinario >= contInterpolar) {
-            interpoladaVitoria++;
-        } else {
-            binarioVitoria++;
-        }
-    }
-
-    int mediaTruncadaBinaria = (numeroDeConsultas > 0) ? (numDeChamadasBinaria / numeroDeConsultas) : 0;
-    int mediaTruncadaInterpolada = (numeroDeConsultas > 0) ? (numDeChamadasInterpolada / numeroDeConsultas) : 0;
-
-    fprintf(output, "BINARY=%d:%d\n", binarioVitoria, mediaTruncadaBinaria);
-    fprintf(output, "INTERPOLATION=%d:%d\n", interpoladaVitoria, mediaTruncadaInterpolada);
-
+    fclose(entrada);
+    fclose(saida);
     free(livros);
-    free(consultas);
-    fclose(output);
 
     return 0;
 }
