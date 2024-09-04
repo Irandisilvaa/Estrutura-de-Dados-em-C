@@ -2,6 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+/*▶ A empresa de tecnologia Poxim Tech está
+desenvolvendo um sistema de armazenamento de
+arquivos baseado em árvore binária de busca
+▶ O formato de nome dos arquivos é definido por uma
+cadeia com 1 até 50 caracteres, composta somente
+por letras, números e os símbolos ’_’ e ’.’
+▶ Cada arquivo possui também informações de
+permissão de acesso para somente leitura (ro) e
+escrita e leitura (rw), além do tamanho em bytes
+▶ Caso um nome de arquivo repetido seja inserido, é
+feita a substituição das informações desde que o
+arquivo permita a escrita (rw) */
+
+
 // Estrutura do nó da árvore binária
 typedef struct arquivo {
     int numInsercao;         // Número de inserção do nó na árvore
