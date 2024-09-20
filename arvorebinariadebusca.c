@@ -78,14 +78,14 @@ void percursoEDP(Arquivo* raiz, FILE* output) {
     fprintf(output, "%d %s %s %d %s\n", raiz->numInsercao, raiz->nomeArquivo, raiz->permissao, raiz->tamArquivo, raiz->tamArquivo == 1 ? "byte" : "bytes");
 }
 
-int main() {
-    FILE* input = fopen("entrada.txt", "r");
+int main(int argc, char* argv[]) {
+    FILE* input = fopen(argv[1], "r");
     if (input == NULL) {
         perror("Erro ao abrir o arquivo de entrada");
         return 1;
     }
 
-    FILE* output = fopen("saida.txt", "w");
+    FILE* output = fopen(argv[2], "w");
     if (output == NULL) {
         perror("Erro ao abrir o arquivo de saída");
         fclose(input);
@@ -101,7 +101,7 @@ int main() {
         char permissao[3];
         int tamanho;
         fscanf(input, "%s %s %d", nome, permissao, &tamanho);
-        raiz = inserirNo(raiz, nome, permissao, tamanho, i + 1);  // `i + 1` para ajustar o índice de inserção
+        raiz = inserirNo(raiz, nome, permissao, tamanho, i);  
     }
 
     // Gera as saídas em ordem, pré-ordem e pós-ordem
