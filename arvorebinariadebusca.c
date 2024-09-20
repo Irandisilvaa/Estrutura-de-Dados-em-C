@@ -2,21 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-/*▶ A empresa de tecnologia Poxim Tech está
-desenvolvendo um sistema de armazenamento de
-arquivos baseado em árvore binária de busca
-▶ O formato de nome dos arquivos é definido por uma
-cadeia com 1 até 50 caracteres, composta somente
-por letras, números e os símbolos ’_’ e ’.’
-▶ Cada arquivo possui também informações de
-permissão de acesso para somente leitura (ro) e
-escrita e leitura (rw), além do tamanho em bytes
-▶ Caso um nome de arquivo repetido seja inserido, é
-feita a substituição das informações desde que o
-arquivo permita a escrita (rw) */
-
-
 // Estrutura do nó da árvore binária
 typedef struct arquivo {
     int numInsercao;         // Número de inserção do nó na árvore
@@ -93,10 +78,19 @@ void percursoEDP(Arquivo* raiz, FILE* output) {
     fprintf(output, "%d %s %s %d %s\n", raiz->numInsercao, raiz->nomeArquivo, raiz->permissao, raiz->tamArquivo, raiz->tamArquivo == 1 ? "byte" : "bytes");
 }
 
-int main(int argc, char* argv[]) {
-	
-	FILE* input = fopen(argv[1], "r");
-	FILE* output = fopen(argv[2], "w");
+int main() {
+    FILE* input = fopen("entrada.txt", "r");
+    if (input == NULL) {
+        perror("Erro ao abrir o arquivo de entrada");
+        return 1;
+    }
+
+    FILE* output = fopen("saida.txt", "w");
+    if (output == NULL) {
+        perror("Erro ao abrir o arquivo de saída");
+        fclose(input);
+        return 1;
+    }
 
     Arquivo* raiz = NULL;
     int quantDocumentos;
@@ -107,7 +101,7 @@ int main(int argc, char* argv[]) {
         char permissao[3];
         int tamanho;
         fscanf(input, "%s %s %d", nome, permissao, &tamanho);
-        raiz = inserirNo(raiz, nome, permissao, tamanho, i );  // `i + 1` para ajustar o índice de inserção
+        raiz = inserirNo(raiz, nome, permissao, tamanho, i + 1);  // `i + 1` para ajustar o índice de inserção
     }
 
     // Gera as saídas em ordem, pré-ordem e pós-ordem
